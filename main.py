@@ -34,6 +34,7 @@ async def quiz1(massage: types.Message):
     # создание кнопок
     markup = InlineKeyboardMarkup()
     button = InlineKeyboardButton('next', callback_data='button')
+    markup.add(button)
     # привязать кнопки к опроснику
     # создание опросника
 
@@ -55,7 +56,34 @@ async def quiz1(massage: types.Message):
         type='quiz',
         correct_option_id=3,
         explanation='ты ахилесс',
-        open_period=1,
+        open_period=15,
+        reply_markup=markup
+    )
+
+
+@db.callback_query_handler(text='button')
+# перехватчик нажатия кнопки
+async def quiz2(call: types.CallbackQuery):
+    ques = 'что это?'
+    answer = [
+        'Бетмен-рыцарь ночи',
+        'томас шелби из семьи острые козырьки',
+        'спанч боб:квадратные штаны',
+        'Ахилес! Сын пелея ',
+        'диктор канала "Мастерская настроения"',
+        'оптимус прайм последний прайм'
+    ]
+    photo = open('media/cambg_6.jpg', 'rb')
+    await bot.send_photo(call.from_user.id, photo=photo)
+    await bot.send_poll(
+        chat_id=call.from_user.id,
+        question=ques,
+        options=answer,
+        is_anonymous=False,
+        type='quiz',
+        correct_option_id=0,
+        explanation='это бетмен ты угадал',
+        open_period=15,
 
     )
 
