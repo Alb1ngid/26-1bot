@@ -3,7 +3,9 @@ from aiogram.utils import executor  # для запуска бота
 import logging
 import decouple
 from decouple import config
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+# inline для кнопок
 # decouple длятого чтобы скрывать определенную инфу
 # logging для выведения расширенной информации
 
@@ -19,19 +21,50 @@ bot = Bot(TOKEN)
 db = Dispatcher(bot=bot)
 
 
-
-
-
 @db.message_handler(commands=['start', 'hello'])
 async def start_handler(massage: types.Message):
     await bot.send_message(massage.from_user.id, f'привет {massage.from_user.first_name}')
     await massage.answer('это ансфер')
     await massage.reply(massage.from_user.first_name)
 
+
+# опросник\викторина
+@db.message_handler(commands=['quiz'])
+async def quiz1(massage: types.Message):
+    # создание кнопок
+    markup = InlineKeyboardMarkup()
+    button = InlineKeyboardButton('next', callback_data='button')
+    # привязать кнопки к опроснику
+    # создание опросника
+
+    ques = 'кто ты воин?'
+    answer = [
+        'Бетмен-рыцарь ночи',
+        'томас шелби из семьи острые козырьки',
+        'спанч боб:квадратные штаны',
+        'Ахилес! Сын пелея ',
+        'диктор канала "Мастерская настроения"',
+        'оптимус прайм последний прайм'
+    ]
+    # await massage.answer_poll()
+    await bot.send_poll(
+        chat_id=massage.from_user.id,
+        question=ques,
+        options=answer,
+        is_anonymous=False,
+        type='quiz',
+        correct_option_id=3,
+        explanation='ты ахилесс',
+        open_period=1,
+
+    )
+
+
 @db.message_handler()
 async def echo(massage: types.Message):
     await bot.send_message(massage.from_user.id, massage.text)
     await massage.answer('что-то еще?')
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
