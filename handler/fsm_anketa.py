@@ -7,9 +7,10 @@ from aiogram.dispatcher.filters import Text
 class FSMAdmin(StatesGroup):
     name = State()
     age = State()
-    photo = State()
     gender = State()
     region = State()
+    photo = State()
+    submit=State()
 
 
 async def fsm_start(massage: types.Message):
@@ -26,10 +27,69 @@ async def load_name(massage: types.Message, state: FSMContext):
         date['username'] = massage.from_user.username
         date['name'] = massage.text
         print(date)
-    await FSMAdmin.next() #переключатель состояния
+    await FSMAdmin.next()  # переключатель состояния
     await massage.answer('сколько живешь?')
 
 
-def reg_hand_anketa(db:Dispatcher):
-    db.register_message_handler(fsm_start,commands=['reg'])
-    db.register_message_handler(load_name,state=FSMAdmin.name)
+async def load_age(massage: types.Message, state: FSMContext):
+    if not massage.text.isdigit():
+        await massage.answer("пиши числа родной")
+    elif not 16 <= int(massage.text) <= 40:
+        await massage.answer('ты не такой как все')
+    else:
+        async with state.proxy() as date:
+            date['age'] = massage.text
+            print(date)
+        await FSMAdmin.next()
+        await massage.answer('какой ты пол?')
+
+
+async def load_gender(massage: types.Message, state: FSMContext):
+    async with state.proxy() as date:  # храниться кеш
+        date['gender'] = massage.text
+        print(date)
+    await FSMAdmin.next()  # переключатель сост
+    await massage.answer('откуда?')
+
+
+async def load_region(massage: types.Message, state: FSMContext):
+    async with state.proxy() as date:  # храниться кеш
+        date['region'] = massage.text
+        print(date)
+    await FSMAdmin.next()  # переключатель сост
+    await massage.answer('фотку кинь да?')
+
+
+async def load_photo(massage: types.Message, state: FSMContext):
+    print(massage)
+    async with state.proxy() as date:
+        date['photo'] = massage.photo[0].file_id
+
+        await massage.answer_photo(date["photo"],
+                                   caption=f'{date["name"]} {date["age"]}'
+                                           f'{date["gender"]} @{date["username"]}')
+    await FSMAdmin.next()
+    await massage.answer('всё окей да?')
+
+
+async def submit(massage: types.Message, state: FSMContext):
+    if massage.text.lower() == 'да':
+        await massage.answer('ты под защитой')
+        #         подключение к бд и его сохранение
+        await state.finish()
+    elif massage.text == 'миш всё фигня давай по новой':
+        await massage.answer('как тиба звать родной?', )
+        await FSMAdmin.name.set()
+    else:
+        await massage.answer('не путай берега', )
+
+
+def reg_hand_anketa(db: Dispatcher):
+    db.register_message_handler(fsm_start, commands=['reg'])
+    db.register_message_handler(load_name, state=FSMAdmin.name)
+    db.register_message_handler(load_age, state=FSMAdmin.age)
+    db.register_message_handler(load_gender, state=FSMAdmin.gender)
+    db.register_message_handler(load_region, state=FSMAdmin.region)
+    db.register_message_handler(load_photo, state=FSMAdmin.photo,
+                                content_types=['photo'])
+    db.register_message_handler(submit, state=FSMAdmin.submit)
